@@ -52,10 +52,10 @@ class FPAddStage1(val n: Int) extends Module {
   val reg_b_larger = RegInit(false.B)
   val reg_mant_shift = RegInit(0.U(expWidth.W))
   val reg_exp = Reg(UInt(width = expWidth.W))
-  val reg_manta = RegNext(a_wrap.mantissa)
-  val reg_mantb = RegNext(b_wrap.mantissa)
+  val reg_manta = RegInit(a_wrap.mantissa)
+  val reg_mantb = RegInit(b_wrap.mantissa)
   val reg_sign = RegInit(false.B)
-  val reg_sub = RegNext((a_wrap.sign ^ b_wrap.sign))
+  val reg_sub = RegInit((a_wrap.sign ^ b_wrap.sign))
 
   // In stage 1, we subtract the exponents
   // This will tell us which number is larger
@@ -121,11 +121,11 @@ class FPAddStage2(val n: Int) extends Module {
 //printf("mant_shift: %d\n", io.mant_shift)
 
   val shifted_mant = Mux(io.mant_shift >= (mantWidth + 1).U, 0.U, smaller_mant >> io.mant_shift)
-  val reg_manta = RegNext(larger_mant)
-  val reg_mantb = RegNext(shifted_mant)
-  val reg_sign = RegNext(io.sign_in)
-  val reg_sub = RegNext(io.sub_in)
-  val reg_exp = RegNext(io.exp_in)
+  val reg_manta = RegInit(larger_mant)
+  val reg_mantb = RegInit(shifted_mant)
+  val reg_sign = RegInit(io.sign_in)
+  val reg_sub = RegInit(io.sub_in)
+  val reg_exp = RegInit(io.exp_in)
 
   io.manta_out := reg_manta
   io.mantb_out := reg_mantb

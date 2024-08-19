@@ -2,9 +2,8 @@ package fpDivision
 
 import chisel3._
 import chisel3.util._
-// import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
 
-class fpDiv(val w: Int) extends Module { //w = 32
+class fpDiv(val w: Int = 32) extends Module {
   val io = IO(new Bundle {
     val in1 = Input(UInt(width = w.W))
     val in2 = Input(UInt(width = w.W))
@@ -31,12 +30,11 @@ class fpDiv(val w: Int) extends Module { //w = 32
 
   io.out := multiplier.io.res
 
-  printf("\nmultiplier b : %d\n", Cat(io.in2(31), negExp, inverter.io.out(23, 1)))
-  //printf("exponent2: %d\n", exponent2)
-  printf("negExp : %d, in1 exp %d\n", negExp, io.in1(30, 23))
-  printf("in1: %d, in2: %d\n", io.in1, io.in2)
-  printf("inverter in: %d out: %d\n", io.in2(22, 0), inverter.io.out)
-  printf("out: %d\n", multiplier.io.res)
+  // printf("\nmultiplier b : %d\n", Cat(io.in2(31), negExp, inverter.io.out(23, 1)))
+  // printf("negExp : %d, in2 exp %d\n", negExp, io.in1(30, 23))
+  // printf("in1: %d, in2: %d\n", io.in1, io.in2)
+  // printf("inverter in: %d out: %d\n", io.in2(22, 0), inverter.io.out)
+  // printf("out: %d\n", multiplier.io.res)
 
 //	printf("%d\n", multiplier.io.res)
 
