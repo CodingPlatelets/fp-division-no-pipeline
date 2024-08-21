@@ -14,7 +14,7 @@ object FloatUtils {
 
         byte_array(0) = 0
 
-        for (i <- 0 until float_array.length) {
+        for (i <- float_array.indices) {
             val start_index = i * 4
             val rawint = floatToRawIntBits(float_array(i))
 
@@ -33,7 +33,7 @@ object FloatUtils {
 
         byte_array(0) = 0
 
-        for (i <- 0 until double_array.length) {
+        for (i <- double_array.indices) {
             val start_index = i * 8
             val rawlong = doubleToRawLongBits(double_array(i))
 

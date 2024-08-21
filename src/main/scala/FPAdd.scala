@@ -26,14 +26,14 @@ class FPAddStage1(val n: Int) extends Module {
   val (expWidth, mantWidth) = getExpMantWidths(n)
 
   val io = IO(new Bundle {
-    val a = Input(Bits(width = n.W))
-    val b = Input(Bits(width = n.W))
+    val a = Input(UInt(n.W))
+    val b = Input(UInt(n.W))
 
     val b_larger = Output(Bool())
-    val mant_shift = Output(UInt(width = expWidth.W))
-    val exp = Output(UInt(width = expWidth.W))
-    val manta = Output(UInt(width = (mantWidth + 1).W))
-    val mantb = Output(UInt(width = (mantWidth + 1).W))
+    val mant_shift = Output(UInt(expWidth.W))
+    val exp = Output(UInt(expWidth.W))
+    val manta = Output(UInt((mantWidth + 1).W))
+    val mantb = Output(UInt((mantWidth + 1).W))
     val sign = Output(Bool())
     val sub = Output(Bool())
   })
@@ -51,7 +51,7 @@ class FPAddStage1(val n: Int) extends Module {
 
   val reg_b_larger = RegInit(false.B)
   val reg_mant_shift = RegInit(0.U(expWidth.W))
-  val reg_exp = Reg(UInt(width = expWidth.W))
+  val reg_exp = RegInit(0.U(expWidth.W))
   val reg_manta = RegInit(a_wrap.mantissa)
   val reg_mantb = RegInit(b_wrap.mantissa)
   val reg_sign = RegInit(false.B)
@@ -231,33 +231,33 @@ class FPAdd(val n: Int) extends Module {
 
   val stage1 = Module(new FPAddStage1(n))
 
-  stage1.io.a := io.a
-  stage1.io.b := io.b
+  stage1.io.a <> io.a
+  stage1.io.b <> io.b
 
   val stage2 = Module(new FPAddStage2(n))
 
-  stage2.io.manta_in := stage1.io.manta
-  stage2.io.mantb_in := stage1.io.mantb
-  stage2.io.exp_in := stage1.io.exp
-  stage2.io.sign_in := stage1.io.sign
-  stage2.io.sub_in := stage1.io.sub
-  stage2.io.b_larger := stage1.io.b_larger
-  stage2.io.mant_shift := stage1.io.mant_shift
+  stage2.io.manta_in <> stage1.io.manta
+  stage2.io.mantb_in <> stage1.io.mantb
+  stage2.io.exp_in <> stage1.io.exp
+  stage2.io.sign_in <> stage1.io.sign
+  stage2.io.sub_in <> stage1.io.sub
+  stage2.io.b_larger <> stage1.io.b_larger
+  stage2.io.mant_shift <> stage1.io.mant_shift
 
   val stage3 = Module(new FPAddStage3(n))
 
-  stage3.io.manta := stage2.io.manta_out
-  stage3.io.mantb := stage2.io.mantb_out
-  stage3.io.exp_in := stage2.io.exp_out
-  stage3.io.sign_in := stage2.io.sign_out
-  stage3.io.sub := stage2.io.sub_out
+  stage3.io.manta <> stage2.io.manta_out
+  stage3.io.mantb <> stage2.io.mantb_out
+  stage3.io.exp_in <> stage2.io.exp_out
+  stage3.io.sign_in <> stage2.io.sign_out
+  stage3.io.sub <> stage2.io.sub_out
 
   val stage4 = Module(new FPAddStage4(n))
 
-  stage4.io.exp_in := stage3.io.exp_out
-  stage4.io.mant_in := stage3.io.mant_out
+  stage4.io.exp_in <> stage3.io.exp_out
+  stage4.io.mant_in <> stage3.io.mant_out
 
-  io.res := Cat(stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out)
+  io.res <> Cat(stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out)
 
 //printf("FPAdd result: sign: %d, exp: %d, mant: %d res: %d\n", stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out, io.res.toUInt())
 }

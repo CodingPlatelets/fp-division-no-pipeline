@@ -6,7 +6,7 @@ import chisel3.util.Cat
 // Wraps a Chisel Flo or Dbl datatype to allow easy
 // extraction of the different parts (sign, exponent, mantissa)
 
-class FloatWrapper(val num: Bits) {
+class FloatWrapper(val num: UInt) {
   val (sign: Bool, exponent: UInt, mantissa: UInt, zero: Bool) = num.getWidth match {
     case 32 =>
       (

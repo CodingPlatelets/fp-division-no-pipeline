@@ -3,14 +3,14 @@ package fpDivision
 import chisel3._
 import chisel3.util._
 
-class fpDiv(val w: Int = 32) extends Module {
+class FPDiv(val w: Int = 32) extends Module {
   val io = IO(new Bundle {
     val in1 = Input(UInt(width = w.W))
     val in2 = Input(UInt(width = w.W))
     val out = Output(UInt(width = w.W))
   })
 
-  val inverter = Module(new fpInverter(23))
+  val inverter = Module(new FPInverter(23))
   val multiplier = Module(new FPMult(w))
 
   inverter.io.in1 := io.in2(22, 0) //mantissa
@@ -24,8 +24,8 @@ class fpDiv(val w: Int = 32) extends Module {
 
   //val in1Buffer    = Reg(init = 0.U, next = io.in1)
 
-  multiplier.io.a := io.in1
-  multiplier.io.b := Cat(io.in2(31), negExp, inverter.io.out(23, 1))
+  multiplier.io.multiplicand := io.in1
+  multiplier.io.multiplier := Cat(io.in2(31), negExp, inverter.io.out(23, 1))
   // skipping msb of inverter (multiplying mantissa by 2)
 
   io.out := multiplier.io.res
