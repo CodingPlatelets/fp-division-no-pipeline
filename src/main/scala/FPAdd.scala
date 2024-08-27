@@ -23,6 +23,7 @@ class SatLeftShift(val m: Int, val n: Int) extends Module {
 }
 
 class FPAddStage1(val n: Int) extends Module {
+  // exp:8 mant:23
   val (expWidth, mantWidth) = getExpMantWidths(n)
 
   val io = IO(new Bundle {
@@ -45,24 +46,26 @@ class FPAddStage1(val n: Int) extends Module {
   // so that we can catch if it becomes negative
   val ext_exp_a = Cat(0.U(1.W), a_wrap.exponent)
   val ext_exp_b = Cat(0.U(1.W), b_wrap.exponent)
-  val exp_diff = ext_exp_a - ext_exp_b
+  val exp_diff = Wire(UInt((expWidth + 1).W))
+  exp_diff := ext_exp_a - ext_exp_b
 
-//printf("Stage1 exp_diff: %d\n", exp_diff)
+  // printf("Stage1 exp_diff: %d\n", exp_diff)
 
   val reg_b_larger = RegInit(false.B)
   val reg_mant_shift = RegInit(0.U(expWidth.W))
   val reg_exp = RegInit(0.U(expWidth.W))
-  val reg_manta = RegInit(a_wrap.mantissa)
-  val reg_mantb = RegInit(b_wrap.mantissa)
+  val reg_manta = RegNext(a_wrap.mantissa)
+  val reg_mantb = RegNext(b_wrap.mantissa)
   val reg_sign = RegInit(false.B)
-  val reg_sub = RegInit((a_wrap.sign ^ b_wrap.sign))
+  val reg_sub = RegNext(a_wrap.sign ^ b_wrap.sign)
 
   // In stage 1, we subtract the exponents
   // This will tell us which number is larger
   // as well as what we need to shift the smaller mantissa by
 
   // b is larger
-  when(exp_diff(expWidth) === 1.U) {
+  // exp_diff is a (expWidth + 1) bit number
+  when(exp_diff(expWidth) === 1.U(1.W)) {
     // absolute value
     reg_mant_shift := -exp_diff(expWidth - 1, 0)
     //mant_shift := (~exp_diff) + UInt(1)
@@ -89,17 +92,17 @@ class FPAddStage2(val n: Int) extends Module {
   val (expWidth, mantWidth) = getExpMantWidths(n)
 
   val io = IO(new Bundle {
-    val manta_in = Input(UInt(width = (mantWidth + 1).W))
-    val mantb_in = Input(UInt(width = (mantWidth + 1).W))
-    val exp_in = Input(UInt(width = expWidth.W))
-    val mant_shift = Input(UInt(width = expWidth.W))
+    val manta_in = Input(UInt((mantWidth + 1).W))
+    val mantb_in = Input(UInt((mantWidth + 1).W))
+    val exp_in = Input(UInt(expWidth.W))
+    val mant_shift = Input(UInt(expWidth.W))
     val b_larger = Input(Bool())
     val sign_in = Input(Bool())
     val sub_in = Input(Bool())
 
-    val manta_out = Output(UInt(width = (mantWidth + 1).W))
-    val mantb_out = Output(UInt(width = (mantWidth + 1).W))
-    val exp_out = Output(UInt(width = expWidth.W))
+    val manta_out = Output(UInt((mantWidth + 1).W))
+    val mantb_out = Output(UInt((mantWidth + 1).W))
+    val exp_out = Output(UInt(expWidth.W))
     val sign_out = Output(Bool())
     val sub_out = Output(Bool())
   })
@@ -107,8 +110,9 @@ class FPAddStage2(val n: Int) extends Module {
   // in stage 2 we shift the appropriate mantissa by the amount
   // detected in stage 1
 
-  val larger_mant = Wire(UInt(width = (mantWidth + 1).W))
-  val smaller_mant = Wire(UInt(width = (mantWidth + 1).W))
+  val larger_mant = Wire(UInt((mantWidth + 1).W))
+  val smaller_mant = Wire(UInt((mantWidth + 1).W))
+  val shifted_mant = Wire(UInt((mantWidth + 1).W))
 
   when(io.b_larger) {
     larger_mant := io.mantb_in
@@ -120,35 +124,42 @@ class FPAddStage2(val n: Int) extends Module {
 
 //printf("mant_shift: %d\n", io.mant_shift)
 
-  val shifted_mant = Mux(io.mant_shift >= (mantWidth + 1).U, 0.U, smaller_mant >> io.mant_shift)
-  val reg_manta = RegInit(larger_mant)
-  val reg_mantb = RegInit(shifted_mant)
-  val reg_sign = RegInit(io.sign_in)
-  val reg_sub = RegInit(io.sub_in)
-  val reg_exp = RegInit(io.exp_in)
+  shifted_mant := Mux(io.mant_shift >= (mantWidth + 1).U, 0.U, smaller_mant >> io.mant_shift)
+  val reg_manta = RegNext(larger_mant)
+  val reg_mantb = RegNext(shifted_mant)
 
+  // printf("stage 2: reg_manta: %d, reg_mantb: %d\n", reg_manta, reg_mantb)
+
+  // val reg_sign = RegInit(io.sign_in)
+  // val reg_sub = RegInit(io.sub_in)
+  // val reg_exp = RegInit(io.exp_in)
   io.manta_out := reg_manta
   io.mantb_out := reg_mantb
-  io.sign_out := reg_sign
-  io.sub_out := reg_sub
-  io.exp_out := reg_exp
+  io.sign_out := RegNext(io.sign_in)
+  io.sub_out := RegNext(io.sub_in)
+  io.exp_out := RegNext(io.exp_in)
 
-//printf("Stage2 large mantissa: %d small mantissa: %d, shitfted mantissa: %d \n", larger_mant, smaller_mant, shifted_mant)
+  // printf(
+  //   "Stage2 large mantissa: %d small mantissa: %d, shitfted mantissa: %d \n",
+  //   larger_mant,
+  //   smaller_mant,
+  //   shifted_mant
+  // )
 }
 
 class FPAddStage3(val n: Int) extends Module {
   val (expWidth, mantWidth) = getExpMantWidths(n)
 
   val io = IO(new Bundle {
-    val manta = Input(UInt(width = (mantWidth + 1).W))
-    val mantb = Input(UInt(width = (mantWidth + 1).W))
-    val exp_in = Input(UInt(width = expWidth.W))
+    val manta = Input(UInt((mantWidth + 1).W))
+    val mantb = Input(UInt((mantWidth + 1).W))
+    val exp_in = Input(UInt(expWidth.W))
     val sign_in = Input(Bool())
     val sub = Input(Bool())
 
-    val mant_out = Output(UInt(width = (mantWidth + 1).W))
+    val mant_out = Output(UInt((mantWidth + 1).W))
     val sign_out = Output(Bool())
-    val exp_out = Output(UInt(width = expWidth.W))
+    val exp_out = Output(UInt(expWidth.W))
   })
 
   // in stage 3 we subtract or add the mantissas
@@ -156,10 +167,10 @@ class FPAddStage3(val n: Int) extends Module {
 
   val manta_ext = Cat(0.U(1.W), io.manta)
   val mantb_ext = Cat(0.U(1.W), io.mantb)
+  val mant_sum = WireDefault(0.U((mantWidth + 2).W))
+  mant_sum := Mux(io.sub, manta_ext - mantb_ext, manta_ext + mantb_ext)
 
-  val mant_sum = Mux(io.sub, manta_ext - mantb_ext, manta_ext + mantb_ext)
-
-//printf("Stage3 mant a: %d, mant b: %d, mantRes: %d\n", manta_ext, mantb_ext, mant_sum)
+  // printf("Stage3 mant a: %d, mant b: %d, mantRes: %d\n", manta_ext, mantb_ext, mant_sum)
 
   // here we drop the overflow bit
   val reg_mant = RegInit(0.U((mantWidth + 1).W))
@@ -189,18 +200,18 @@ class FPAddStage3(val n: Int) extends Module {
   io.sign_out := reg_sign
   io.exp_out := reg_exp
   io.mant_out := reg_mant
-//printf("stage3 sign: %d, exp: %d, mant: %d\n", reg_sign, reg_exp, reg_mant)
+  // printf("stage3 sign: %d, exp: %d, mant: %d\n", reg_sign, reg_exp, reg_mant)
 }
 
 class FPAddStage4(val n: Int) extends Module {
   val (expWidth, mantWidth) = getExpMantWidths(n)
 
   val io = IO(new Bundle {
-    val exp_in = Input(UInt(width = expWidth.W))
-    val mant_in = Input(UInt(width = (mantWidth + 1).W))
+    val exp_in = Input(UInt(expWidth.W))
+    val mant_in = Input(UInt((mantWidth + 1).W))
 
-    val exp_out = Output(UInt(width = expWidth.W))
-    val mant_out = Output(UInt(width = mantWidth.W))
+    val exp_out = Output(UInt(expWidth.W))
+    val mant_out = Output(UInt(mantWidth.W))
   })
 
   // finally in stage 4 we normalize mantissa and exponent
@@ -217,14 +228,14 @@ class FPAddStage4(val n: Int) extends Module {
     io.exp_out := io.exp_in - norm_shift
   }
 
-//printf("Stage4 norm_shift: %d, mant out: %d, exp out: %d \n", norm_shift, io.mant_out, io.exp_out)
+  // printf("Stage4 norm_shift: %d, mant out: %d, exp out: %d \n", norm_shift, io.mant_out, io.exp_out)
 }
 
 class FPAdd(val n: Int) extends Module {
   val io = IO(new Bundle {
-    val a = Input(Bits(width = n.W))
-    val b = Input(Bits(width = n.W))
-    val res = Output(Bits(width = n.W))
+    val a = Input(Bits(n.W))
+    val b = Input(Bits(n.W))
+    val res = Output(Bits(n.W))
   })
 
   val (expWidth, mantWidth) = getExpMantWidths(n)
@@ -259,8 +270,11 @@ class FPAdd(val n: Int) extends Module {
 
   io.res <> Cat(stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out)
 
-//printf("FPAdd result: sign: %d, exp: %d, mant: %d res: %d\n", stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out, io.res.toUInt())
+  // printf(
+  //   "FPAdd result: sign: %d, exp: %d, mant: %d res: %d\n",
+  //   stage3.io.sign_out,
+  //   stage4.io.exp_out,
+  //   stage4.io.mant_out,
+  //   io.res.asUInt
+  // )
 }
-
-class FPAdd32 extends FPAdd(32) {}
-class FPAdd64 extends FPAdd(64) {}
