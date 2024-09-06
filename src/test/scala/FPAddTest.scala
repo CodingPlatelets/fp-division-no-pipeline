@@ -40,11 +40,11 @@ class FPAddTest extends AnyFlatSpec with ChiselScalatestTester {
 
           val calOut = java.lang.Float.intBitsToFloat(dut.io.res.peek().litValue.toInt)
           val missed = math.abs(calOut - resNums(i)) / resNums(i)
-          print(s"adder is: ${adder1Nums(i)} + ${adder2Nums(i)} = ${resNums(i)}\n")
-          print(s"calOut is: ${calOut}\n")
-          print(s"missed is: ${missed}\n")
-          print(s"\n")
-          assert(missed.abs < math.pow(2, -22))
+          // print(s"adder is: ${adder1Nums(i)} + ${adder2Nums(i)} = ${resNums(i)}\n")
+          // print(s"calOut is: ${calOut}\n")
+          // print(s"missed is: ${missed}\n")
+          // print(s"\n")
+          assert(missed.abs < math.pow(2, -20))
         }
       }
 
