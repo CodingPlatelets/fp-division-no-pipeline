@@ -2,7 +2,7 @@ package fpDivision
 
 import chisel3._
 import chisel3.util._
-
+import _root_.circt.stage.ChiselStage
 class FPDiv(val w: Int = 32) extends Module {
   val io = IO(new Bundle {
     val in1 = Input(UInt(width = w.W))
@@ -45,3 +45,11 @@ class FPDiv(val w: Int = 32) extends Module {
 //     if (!Driver(() => new fpDiv(32))(c => new fpDivTest(c))) System.exit(1)
 //   }
 // }
+
+object FPDiv extends App {
+  ChiselStage.emitSystemVerilogFile(
+    new FPDiv,
+    firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+    args = Array("--target-dir", "./build/chisel")
+  )
+}
