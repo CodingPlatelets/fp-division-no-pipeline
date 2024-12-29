@@ -4,7 +4,7 @@
 	Stage3 : Add/subtract mantissa, check overflow
 	Stage4 : Normalize mantissa and exponent
  */
-package fpDivision
+package fputilNoPipe
 
 import chisel3._
 import chisel3.util.Cat

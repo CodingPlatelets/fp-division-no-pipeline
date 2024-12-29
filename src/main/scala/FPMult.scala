@@ -1,7 +1,6 @@
 // Takes 2 clock cyles to produce the result
 
-package fpDivision
-
+package fputilNoPipe
 import chisel3._
 import chisel3.util.Cat
 

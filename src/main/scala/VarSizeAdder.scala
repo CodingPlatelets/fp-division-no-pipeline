@@ -1,7 +1,7 @@
 // Süleyman Savas, 2016-12-16
 // Halmstad University
 
-package fpDivision
+package fputilNoPipe
 
 import chisel3._
 import chisel3.util._

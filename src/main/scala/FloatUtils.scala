@@ -1,4 +1,4 @@
-package fpDivision
+package fputilNoPipe
 
 import java.lang.Float.{floatToRawIntBits, intBitsToFloat}
 import java.lang.Double.{doubleToRawLongBits, longBitsToDouble}

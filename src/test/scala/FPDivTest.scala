@@ -1,4 +1,4 @@
-package fpDivision
+package fputilNoPipe
 
 import chisel3._
 import chiseltest._
